@@ -23,16 +23,6 @@ def get_user_step(uid):
         return 0
 
 
-def gen_markup():
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(InlineKeyboardButton("Yes", callback_data="cb_yes"),
-                               InlineKeyboardButton("No", callback_data="cb_no"))
-    return markup
-
-
-
-
 # def process_step01(message):
 #         print(str(message.chat.id))
 #     #try:
@@ -54,41 +44,6 @@ def gen_markup():
 
 
 
-
-@bot.message_handler(commands=["geo"],func=lambda message: get_user_step(message.chat.id) == 2)
-def geo(call):
-    keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    button_geo = telebot.types.KeyboardButton(text="Отправить местоположение", request_location=True)
-    keyboard.add(button_geo)
-    bot.send_message(call.message.chat.id, "Привет! Нажми на кнопку и передай мне свое местоположение", reply_markup=keyboard)
-
-@bot.message_handler(content_types=["location"],func=lambda message: get_user_step(message.chat.id) == 2)
-def location(message):
-    if message.location is not None:
-        print(message.location)
-        print("latitude: %s; longitude: %s" % (message.location.latitude, message.location.longitude))
-        
-        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        button_on = telebot.types.KeyboardButton(text="Включить кофемашину")
-        keyboard.add(button_on)
-        bot.send_message(message.chat.id, 'Замечательно!. Теперь, подготовь кофемашину и включи ее', reply_markup=keyboard)
-        userStep[message.chat.id] = 3
-
-
-@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 3)
-def msg_image_select(message):
-    cid = message.chat.id
-    text = message.text
-
-    # for some reason the 'upload_photo' status isn't quite working (doesn't show at all)
-    #bot.send_chat_action(cid, 'typing')
-
-    if text == 'Включить кофемашину':  # send the appropriate image based on the reply to the "/getImage" command
-        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        button_on = telebot.types.KeyboardButton(text="Фото витрины")        
-        keyboard.add(button_on)
-        bot.send_message(message.chat.id, 'Супер! Осталось отправить фото витрины', reply_markup=keyboard)
-        userStep[message.chat.id] = 4
 
         #bot.send_photo(cid, open('d:/PROG/PyTbot/examples/detailed_example/rooster.jpg', 'rb'),
          #              reply_markup=hideBoard)  # send file and hide keyboard, after image is sent
@@ -130,6 +85,45 @@ def msg_image_select(message):
         # bot.send_message(message.chat.id, 'Конец', reply_markup=telebot.types.ReplyKeyboardRemove())
         userStep[message.chat.id] = 5
 
+@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 3)
+def msg_image_select(message):
+    cid = message.chat.id
+    text = message.text
+
+    if text == 'Включить кофемашину':  
+        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        button_on = telebot.types.KeyboardButton(text="Фото витрины")        
+        keyboard.add(button_on)
+        bot.send_message(message.chat.id, 'Супер! Осталось отправить фото витрины', reply_markup=keyboard)
+        userStep[message.chat.id] = 4
+
+
+## step 02
+@bot.message_handler(content_types=["location"],func=lambda message: get_user_step(message.chat.id) == 2)
+def location(message):
+    if message.location is not None:
+        print(message.location)
+        print("latitude: %s; longitude: %s" % (message.location.latitude, message.location.longitude))
+        
+        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        button_on = telebot.types.KeyboardButton(text="Включить кофемашину")
+        keyboard.add(button_on)
+        bot.send_message(message.chat.id, 'Замечательно!. Теперь, подготовь кофемашину и включи ее', reply_markup=keyboard)
+        userStep[message.chat.id] = 3
+
+
+#@bot.message_handler(commands=["geo"],func=lambda message: get_user_step(message.chat.id) == 2)
+def geo(call):
+    try:
+        if get_user_step(call.message.chat.id) == 2:
+            keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+            button_geo = telebot.types.KeyboardButton(text="Отправить местоположение", request_location=True)
+            keyboard.add(button_geo)
+            bot.send_message(call.message.chat.id, "Привет! Нажми на кнопку и передай мне свое местоположение", reply_markup=keyboard)
+    except:
+        None
+
+## step 01
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     try:
@@ -137,26 +131,27 @@ def callback_query(call):
             if call.data == "cb_yes":
                 bot.answer_callback_query(call.id, "Отлично! Идем дальше!")
                 userStep[call.message.chat.id] = 2
-                #bot.register_next_step_handler(msg,process_step00)
-                #process_step01(message)
-                #bot.send_message(call.message.chat.id,'Начали!')
-                #bot.register_next_step_handler(msg,process_stp01(call))
                 geo(call)
-                #bot.send_message(call.message.chat.id,'Начали!')
             if call.data == "cb_no":
                 bot.answer_callback_query(call.id, "Хорошего дня!")
     except:
         None
 
-#def inline(callback):
-#    bot.delete_message(callback.message.chat.id, callback.message.message_id)
-
-
-
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    #bot.send_message(message.chat.id, 'chat_id:'+str(message.chat.id)+'User:'+str(message.chat.first_name), reply_markup=keyboard1)
     
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton("Да", callback_data="cb_yes"),
+    InlineKeyboardButton("Нет", callback_data="cb_no"))    
+    bot.send_message(message.chat.id, f"Привет {str(message.chat.first_name)}!\nНачнем работу?", reply_markup=markup)
+    userStep[message.chat.id] = 1    
+    
+
+    #bot.send_message(message.chat.id, 'chat_id:'+str(message.chat.id)+'User:'+str(message.chat.first_name), reply_markup=keyboard1)
+
+#def inline(callback):
+#    bot.delete_message(callback.message.chat.id, callback.message.message_id)    
     #bot.send_message(message.chat.id, 'chat_id:'+str(message.chat.id)+'User:'+str(message.chat.first_name)+'message_id:'+str(message.message_id))
     #m=message.message_id
     #bot.delete_message(message.chat.id, message.message_id)
@@ -168,8 +163,7 @@ def start_message(message):
     #     except:
     #         None
     #     m=m-1
-    userStep[message.chat.id] = 1    
-    bot.send_message(message.chat.id, f"Привет {str(message.chat.first_name)}!\nНачнем работу?", reply_markup=gen_markup())
+
       
     #bot.send_message(message.chat.id, 'end')
 
