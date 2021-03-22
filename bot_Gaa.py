@@ -50,52 +50,53 @@ def get_user_step(uid):
 
 
 #@bot.message_handler(content_types=['photo'],func=lambda message: get_user_step(message.chat.id) == 3)
-@bot.message_handler(content_types=['photo'],func=lambda message: get_user_step(message.chat.id) == 5)
+@bot.message_handler(content_types=['photo'],func=lambda message: get_user_step(message.chat.id) == 4)
 def handle_file(message):
     #try:
-    # chat_id = message.chat.id
-    # file_info = bot.get_file(message.photo[1].file_id)
-    # print(file_info)
-    # downloaded_file = bot.download_file(file_info.file_path)
-    # print(str(message))
-    # src = 'D:/1.jpg';
-    # with open(src, 'wb') as new_file:
-    #     new_file.write(downloaded_file)
-    bot.reply_to(message, "Пожалуй, я сохраню это")
+    chat_id = message.chat.id
+    file_info = bot.get_file(message.photo[-1].file_id)
+    print(file_info)
+    downloaded_file = bot.download_file(file_info.file_path)
+    src = 'D:/'+file_info.file_path;
+    print(src)
+
+    with open(src, 'wb') as new_file:
+        new_file.write(downloaded_file)
+    bot.reply_to(message, "Отличное фото!")
     bot.send_message(message.chat.id, f"{str(message.chat.first_name)}, У Вас все готово! Хорошего дня!")
     bot.send_sticker(message.chat.id, 'CAADAgADZgkAAnlc4gmfCor5YbYYRAI',reply_markup=telebot.types.ReplyKeyboardRemove())
 
-    userStep[message.chat.id] = 6
+    userStep[message.chat.id] = 5
     #bot.send_message(message.chat.id, 'Все готово!')
     #except Exception as e:
        
         #bot.reply_to(message+"!!!", e)
 
 
-@bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 4)
-def msg_image_select(message):
-    cid = message.chat.id
-    text = message.text
+# @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 4)
+# def msg_image_select(message):
+#     cid = message.chat.id
+#     text = message.text
 
-    # for some reason the 'upload_photo' status isn't quite working (doesn't show at all)
-    #bot.send_chat_action(cid, 'typing')
+#     # for some reason the 'upload_photo' status isn't quite working (doesn't show at all)
+#     #bot.send_chat_action(cid, 'typing')
 
-    if text == 'Фото витрины':  # send the appropriate image based on the reply to the "/getImage" command
-        #
-        # bot.send_message(message.chat.id, 'Конец', reply_markup=telebot.types.ReplyKeyboardRemove())
-        userStep[message.chat.id] = 5
+#     #if text == 'Фото витрины':  # send the appropriate image based on the reply to the "/getImage" command
+#         #
+#         # bot.send_message(message.chat.id, 'Конец', reply_markup=telebot.types.ReplyKeyboardRemove())
+#     userStep[message.chat.id] = 5
 
 @bot.message_handler(func=lambda message: get_user_step(message.chat.id) == 3)
 def msg_image_select(message):
     cid = message.chat.id
     text = message.text
 
-    if text == 'Включить кофемашину':  
-        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        button_on = telebot.types.KeyboardButton(text="Фото витрины")        
-        keyboard.add(button_on)
-        bot.send_message(message.chat.id, 'Супер! Осталось отправить фото витрины', reply_markup=keyboard)
-        userStep[message.chat.id] = 4
+    # if text == 'Включить кофемашину':  
+    #     keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    #     button_on = telebot.types.KeyboardButton(text="Фото витрины")        
+    #     keyboard.add(button_on)
+    #     bot.send_message(message.chat.id, 'Супер! Осталось отправить фото витрины', reply_markup=keyboard)
+    #     userStep[message.chat.id] = 4
 
 
 ## step 02
@@ -105,12 +106,17 @@ def location(message):
         print(message.location)
         print("latitude: %s; longitude: %s" % (message.location.latitude, message.location.longitude))
         
-        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        button_on = telebot.types.KeyboardButton(text="Включить кофемашину")
-        keyboard.add(button_on)
-        bot.send_message(message.chat.id, 'Замечательно!. Теперь, подготовь кофемашину и включи ее', reply_markup=keyboard)
+        # keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        # button_on = telebot.types.KeyboardButton(text="Включить кофемашину")
+        # keyboard.add(button_on)
+        # bot.send_message(message.chat.id, 'Замечательно!. Теперь, подготовь кофемашину и включи ее', reply_markup=keyboard)
+        markup = InlineKeyboardMarkup()
+        markup.row_width = 2
+        markup.add(InlineKeyboardButton("Да", callback_data="cb_yes"),
+        InlineKeyboardButton("Нет", callback_data="cb_no"))    
         userStep[message.chat.id] = 3
-
+        bot.send_message(message.chat.id, "Включить кофемашину?", reply_markup=markup)
+      
 
 #@bot.message_handler(commands=["geo"],func=lambda message: get_user_step(message.chat.id) == 2)
 def geo(call):
@@ -127,13 +133,19 @@ def geo(call):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     try:
-        if userStep[call.message.chat.id] == 1:
-            if call.data == "cb_yes":
-                bot.answer_callback_query(call.id, "Отлично! Идем дальше!")
+        if call.data == "cb_yes" and userStep[call.message.chat.id]>0:
+            if userStep[call.message.chat.id] == 1:
                 userStep[call.message.chat.id] = 2
                 geo(call)
-            if call.data == "cb_no":
-                bot.answer_callback_query(call.id, "Хорошего дня!")
+            if userStep[call.message.chat.id] == 3:
+                userStep[call.message.chat.id] = 4
+                bot.send_message(call.message.chat.id, "Осталось отправить Фото. Пришли мне фото витрины", reply_markup=telebot.types.ReplyKeyboardRemove())
+
+            bot.answer_callback_query(call.id, "Отлично! Идем дальше!")    
+        if call.data == "cb_no" and userStep[call.message.chat.id]>0:
+            userStep[call.message.chat.id] = -1
+            bot.answer_callback_query(call.id, "Хорошего дня!")
+
     except:
         None
 
