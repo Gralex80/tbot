@@ -63,10 +63,9 @@ def handle_file(message):
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
     bot.reply_to(message, "Отличное фото!")
-    bot.send_message(message.chat.id, f"{str(message.chat.first_name)}, У Вас все готово! Хорошего дня!")
-    bot.send_sticker(message.chat.id, 'CAADAgADZgkAAnlc4gmfCor5YbYYRAI',reply_markup=telebot.types.ReplyKeyboardRemove())
-
-    userStep[message.chat.id] = 5
+    bot.send_message(message.chat.id, f"{str(message.chat.first_name)}, У Вас все готово! Хорошего дня!",reply_markup=telebot.types.ReplyKeyboardRemove())
+    bot.send_sticker(message.chat.id, 'CAADAgADZgkAAnlc4gmfCor5YbYYRAI')
+    userStep[message.chat.id] = -1
     #bot.send_message(message.chat.id, 'Все готово!')
     #except Exception as e:
        
@@ -116,7 +115,7 @@ def location(message):
         InlineKeyboardButton("Нет", callback_data="cb_no"))    
         userStep[message.chat.id] = 3
         bot.send_message(message.chat.id, "Включить кофемашину?", reply_markup=markup)
-      
+  
 
 #@bot.message_handler(commands=["geo"],func=lambda message: get_user_step(message.chat.id) == 2)
 def geo(call):
@@ -129,7 +128,7 @@ def geo(call):
     except:
         None
 
-## step 01
+## step 01 and 03
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     try:
